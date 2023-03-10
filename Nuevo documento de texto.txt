@@ -1,0 +1,33 @@
+var dataset = ee.ImageCollection('MODIS/061/MCD64A1')
+                  .filter(ee.Filter.date('2010-01-01', '2022-02-01'));
+var burnedArea = dataset.select('BurnDate');
+var scale = 500;
+var addArea = function(img) {
+  var area = ee.Image.pixelArea()
+            .updateMask(img)
+            .divide(1e6)
+            .clip(geometry)
+            .reduceRegion({
+              reducer: ee.Reducer.sum(),
+              geometry: geometry,
+              scale: scale,
+              bestEffort: true
+            }).getNumber('area');
+  return img.addBands(ee.Image(area).rename('area')).copyProperties(img,['system:time_start'])
+}
+
+var area_collection = burnedArea.map(addArea)
+
+print(area_collection)
+
+print(ui.Chart.image.series(area_collection.select('area'),geometry,ee.Reducer.sum(),scale,null)
+.setOptions({
+  title:'Areas quemadas - MCD64A1',
+  hAxis:
+    {title: 'Date', titleTextStyle: {italic: false, bold:true, color:'gray'}},
+  vAxis: {
+    title: 'Area en hectareas',
+    titleTextStyle: {italic: false, bold: true, color: 'gray'}
+  },
+  colors:['604791']
+}))

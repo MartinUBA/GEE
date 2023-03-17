@@ -1,0 +1,33 @@
+// ///
+// Created on Fri Mar 17 20:50:41 2023
+
+// @author: Martin Nuñez Igarzabal
+// //
+
+//Use of modis dataset to get ndvi band
+var modis = ee.ImageCollection("MODIS/006/MOD13Q1")
+var filtered = modis
+    .filter(ee.Filter.date('2018-01-01','2019-01-01'))
+    
+var modisNDVI = filtered.select('NDVI')
+
+print(modisNDVI)
+
+// Scales the image collection
+var scaledImage = modisNDVI.map(function(image){
+  return image.multiply(0.0001)
+  .copyProperties(image,['system:time_start','system:time_end'])
+})
+// creates a chart series
+var chart = ui.Chart.image.series ({
+  imageCollection:scaledImage,
+  region:farm
+  }).setOptions({
+    interpolateNulls: false,
+    lineWidth:1,
+    pointSize:3,
+    title:'NDVI over time at a Single Location',
+    vAxis: {title:'NDVI'},
+    hAxis: {title: 'Date', format:'YYYY-MMM',gridlines:{count:12}}
+  })
+print(chart)
